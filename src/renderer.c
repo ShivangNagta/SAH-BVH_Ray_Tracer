@@ -49,13 +49,13 @@ SDL_Color trace_ray(Ray ray, Sphere *spheres, int num_spheres, int depth, BVHNod
         SDL_Color base_color = closest_hit.object ? closest_hit.object->color : (SDL_Color){0.0f, 0.0f, 0.0f};
 
         Vec3 reflected_dir = random_on_hemisphere(closest_hit.normal);
-        // Vec3 reflected_dir = vec3_reflect(closest_hit.point, closest_hit.normal);
+        //Vec3 reflected_dir = vec3_reflect(closest_hit.point, closest_hit.normal);
 
         Ray reflected_ray = {closest_hit.point, reflected_dir};
         SDL_Color reflected_color = trace_ray(reflected_ray, spheres, num_spheres, depth - 1, bvh);
-        final_color.r = (Uint8)(base_color.r + 0.5 * reflected_color.r);
-        final_color.g = (Uint8)(base_color.g + 0.5 * reflected_color.g);
-        final_color.b = (Uint8)(base_color.b + 0.5 * reflected_color.b);
+        final_color.r = (Uint8)(base_color.r * 0.5 + 0.8 * reflected_color.r);
+        final_color.g = (Uint8)(base_color.g * 0.5 + 0.8 * reflected_color.g);
+        final_color.b = (Uint8)(base_color.b * 0.5 + 0.8 * reflected_color.b);
 
         final_color.a = 255;
 
@@ -69,9 +69,9 @@ SDL_Color trace_ray(Ray ray, Sphere *spheres, int num_spheres, int depth, BVHNod
         255,
         255};
     // SDL_Color sky_color = {
-    //     255,
-    //     255,
-    //     255,
+    //     0,
+    //     0,
+    //     0,
     //     255};
     return sky_color;
 }

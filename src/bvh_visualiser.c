@@ -29,6 +29,16 @@ static SDL_Point world_to_screen(Vec3 point, Camera* camera, int screen_width, i
     float aspect_ratio = (float)screen_width / screen_height;
     float half_width = aspect_ratio * half_height;
 
+    // Vec3 horizontal = vec3_multiply(camera->right, 2.0f * half_width);
+    // Vec3 vertical = vec3_multiply(camera->up, 2.0f * half_height);
+    // // Vec3 horizontal = vec3_multiply(camera->right, half_width);
+    // // Vec3 vertical = vec3_multiply(camera->up, half_height);
+    
+    // Vec3 direction = camera->forward;
+    // direction = vec3_add(direction, vec3_multiply(horizontal, u));
+    // direction = vec3_add(direction, vec3_multiply(vertical, v));
+    // direction = vec3_normalize(direction);
+
     float screen_x = (x / (z * half_width * 2.0f) + 0.5f) * screen_width;
     float screen_y = (-y / (z * half_height * 2.0f) + 0.5f) * screen_height;
     
@@ -39,6 +49,10 @@ static SDL_Point world_to_screen(Vec3 point, Camera* camera, int screen_width, i
     
     return (SDL_Point){(int)screen_x, (int)screen_y};
 }
+
+
+
+    
 
 static void draw_debug_line(SDL_Renderer* renderer, Vec3 start, Vec3 end, 
                           Camera* camera, int screen_width, int screen_height) {
@@ -54,14 +68,14 @@ static void draw_debug_line(SDL_Renderer* renderer, Vec3 start, Vec3 end,
         
         SDL_RenderDrawLine(renderer, start_screen.x, start_screen.y,
                           end_screen.x, end_screen.y);
-        SDL_RenderDrawLine(renderer, start_screen.x+1, start_screen.y,
-                          end_screen.x+1, end_screen.y);
-        SDL_RenderDrawLine(renderer, start_screen.x, start_screen.y+1,
-                          end_screen.x, end_screen.y+1);
-        SDL_RenderDrawLine(renderer, start_screen.x-1, start_screen.y,
-                          end_screen.x-1, end_screen.y);
-        SDL_RenderDrawLine(renderer, start_screen.x, start_screen.y-1,
-                          end_screen.x, end_screen.y-1);
+        // SDL_RenderDrawLine(renderer, start_screen.x+1, start_screen.y,
+        //                   end_screen.x+1, end_screen.y);
+        // SDL_RenderDrawLine(renderer, start_screen.x, start_screen.y+1,
+        //                   end_screen.x, end_screen.y+1);
+        // SDL_RenderDrawLine(renderer, start_screen.x-1, start_screen.y,
+        //                   end_screen.x-1, end_screen.y);
+        // SDL_RenderDrawLine(renderer, start_screen.x, start_screen.y-1,
+        //                   end_screen.x, end_screen.y-1);
     }
 }
 

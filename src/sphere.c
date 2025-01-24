@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "Custom/sphere.h"
+#include <time.h>
 
 //--------------------------------------------------------------------------------------------------
 
@@ -45,13 +46,15 @@ Sphere create_sphere(Vec3 center, float radius){
         .center = center,
         .radius = radius,
         .color = {0, 0, 0},
+
     };
     return sphere;
 }
 
 Sphere create_random_sphere() {
+    
     Sphere sphere = {
-        .center = {random_float(-40.0f, 40.0f), random_float(-20.0f, 20.0f), random_float(-10.0, 5)},
+        .center = {random_float(-40.0f, 40.0f), random_float(3.0f, 15.0f), random_float(-10.0, 5)},
         .radius = random_float(0.5f, 5.0f),
         .color = {rand() % 256, rand() % 256, rand() % 256, 255},
     };

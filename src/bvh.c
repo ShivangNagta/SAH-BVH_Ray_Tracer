@@ -108,11 +108,11 @@ float evaluate_sah(Sphere *spheres, int start, int end, int axis, float split)
 
 //----------------------------------------------------------------------------------------------------
 
-static void debug_aabb(AABB box, const char* label) {
-    printf("%s: min=(%f,%f,%f), max=(%f,%f,%f)\n", 
-           label, box.min.x, box.min.y, box.min.z,
-           box.max.x, box.max.y, box.max.z);
-}
+// static void debug_aabb(AABB box, const char* label) {
+//     printf("%s: min=(%f,%f,%f), max=(%f,%f,%f)\n", 
+//            label, box.min.x, box.min.y, box.min.z,
+//            box.max.x, box.max.y, box.max.z);
+// }
 
 BVHNode *build_bvh_node(Sphere *spheres, int start, int end, int depth)
 {

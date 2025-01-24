@@ -1,9 +1,9 @@
 #pragma once
 
-#define MOVE_SPEED 0.5f
+#define MOVE_SPEED 2.0f
 #define ROTATE_SPEED 0.002f
-#define MAX_DEPTH 5
+#define MAX_DEPTH 20
 #define EPSILON 0.000001f
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1200
+#define HEIGHT 1000
 

@@ -17,11 +17,13 @@
 Ray get_camera_ray(Camera *camera, float u, float v) {
     float aspect_ratio = (float)WIDTH / (float)HEIGHT;
     float fov_rad = camera->fov * (M_PI / 180.0f);
-    float half_height = tan(fov_rad / 2.0f);
-    float half_width = aspect_ratio * half_height;
+    float half_height = tan(fov_rad / 2.0f);    // y
+    float half_width = aspect_ratio * half_height;   //x
 
     Vec3 horizontal = vec3_multiply(camera->right, 2.0f * half_width);
     Vec3 vertical = vec3_multiply(camera->up, 2.0f * half_height);
+    // Vec3 horizontal = vec3_multiply(camera->right, half_width);
+    // Vec3 vertical = vec3_multiply(camera->up, half_height);
     
     Vec3 direction = camera->forward;
     direction = vec3_add(direction, vec3_multiply(horizontal, u));

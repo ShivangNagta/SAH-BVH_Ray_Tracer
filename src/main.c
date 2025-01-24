@@ -15,9 +15,11 @@
 #include "Custom/benchmark.h"
 #include "Custom/bvh_visualiser.h"
 
-#define NUM_SPHERES 20
+#define NUM_SPHERES 10
 #define MAX_DEPTH 5
-
+#define WIDTH 1000
+#define HEIGHT 800
+#define MOVE_SPEED 2.0f
 
 typedef struct
 {
@@ -25,54 +27,9 @@ typedef struct
 } FloatColor;
 
 
-double get_time()
-{
-    return (double)clock() / CLOCKS_PER_SEC;
-}
+double get_time();
+void display_plot_with_sdl(SDL_Renderer *renderer);
 
-// Plotting the graph img with sdl renderer, whose data was generated in case 1 (benchmark testing)
-// Generated data was orginally plotted with gnuplot and saved to png
-void display_plot_with_sdl(SDL_Renderer *renderer)
-{
-
-    int imgFlags = IMG_INIT_PNG;
-    if (!(IMG_Init(imgFlags) & imgFlags))
-    {
-        printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
-        return;
-    }
-
-    SDL_Surface *plot_surface = IMG_Load("benchmark_results.png");
-    if (!plot_surface)
-    {
-        printf("Error loading plot: %s\n", IMG_GetError());
-        return;
-    }
-
-    SDL_Texture *plot_texture = SDL_CreateTextureFromSurface(renderer, plot_surface);
-    SDL_FreeSurface(plot_surface);
-
-    if (!plot_texture)
-    {
-        printf("Error creating texture: %s\n", SDL_GetError());
-        return;
-    }
-
-    int width, height;
-    SDL_QueryTexture(plot_texture, NULL, NULL, &width, &height);
-    SDL_Rect dest_rect = {
-        .x = (WIDTH - width) / 2,
-        .y = (HEIGHT - height) / 2,
-        .w = width,
-        .h = height};
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, plot_texture, NULL, &dest_rect);
-    SDL_RenderPresent(renderer);
-    SDL_DestroyTexture(plot_texture);
-    IMG_Quit();
-}
 
 //----------------------------------------------------------------------------------------------------
 
@@ -87,7 +44,11 @@ int SDL_main(int argc, char *argv[])
 #endif
 {
 
+    float t = time(NULL) ^ clock();
+    srand(t);
     srand(time(NULL));
+
+    // printf("%f", t);
 
     printf("\nPlease proceed as follows :\n\n");
     printf("Press '1' for benchmark testing with graph plot.\n");
@@ -200,22 +161,33 @@ int SDL_main(int argc, char *argv[])
             return 1;
         }
 
+        //-30.376122 40.379642 84.102859
+        //0.270949 -0.227978 -0.935207
+        //0.960501 -0.000000 0.278277
+        //0.063441 0.973666 -0.218973
+
+        //    .position = {0, 4, 100},
+        //    .forward = {0, 0, -1},
+        //    .right = {1, 0, 0},
+        //    .up = {0, 1, 0},
+
         Camera camera = {
-            .position = {0, 4, 50},
-            .forward = {0, 0, -1},
-            .right = {1, 0, 0},
-            .up = {0, 1, 0},
+            .position = {-30.376122, 40.379642, 84.102859},
+            .forward = {0.270949, -0.227978, -0.935207},
+            .right = {0.960501, 0, 0.278277},
+            .up = {0.063441, 0.973666, -0.218973},
             .yaw = -M_PI,
             .pitch = 0,
             .fov = 45.0f,
             .move = 0};
 
+
         Sphere spheres[NUM_SPHERES];
 
-        // spheres[0] = create_sphere(((Vec3){0.0f, -100.0f, 30.0f}), 100.0f);
-        // spheres[1] = create_sphere(((Vec3){0.0f, 3.0f, 30.0f}), 3.0f);
+        spheres[0] = create_sphere(((Vec3){0.0f, -1000.0f, 30.0f}), 1000.0f);
+        spheres[1] = create_sphere(((Vec3){0.0f, 48.0f, -50.0f}), 50.0f);
 
-        for (int i = 0; i < NUM_SPHERES; i++)
+        for (int i = 2; i < NUM_SPHERES; i++)
         {
             spheres[i] = create_random_sphere();
         }
@@ -336,89 +308,104 @@ int SDL_main(int argc, char *argv[])
                     }
                 }
             }
+
             if (show_bvh_visualization)
             {
+                render_debug_visualization(renderer, root, &camera);
+                SDL_RenderPresent(renderer);
+
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_RenderClear(renderer);
+                
+            }
+            else{
+
+                            if (camera.move)
+            {
+
+                printf("%f %f %f\n", camera.position.x, camera.position.y, camera.position.z);
+                printf("%f %f %f\n", camera.forward.x, camera.forward.y, camera.forward.z);
+                printf("%f %f %f\n", camera.right.x, camera.right.y, camera.right.z);
+                printf("%f %f %f\n", camera.up.x, camera.up.y, camera.  up.z);
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                 SDL_RenderClear(renderer);
 
-                render_debug_visualization(renderer, root, &camera);
-                SDL_RenderPresent(renderer);
+                for (int y = 0; y < HEIGHT; y++)
+                {
+                    for (int x = 0; x < WIDTH; x++)
+                    {
+                        // float u = ((float)x / WIDTH - 0.5f) * 2;
+                        // float v = ((float)y / HEIGHT - 0.5f) * 2;
+
+                        float u = ((float)x / WIDTH - 0.5f);
+                        float v = ((float)y / HEIGHT - 0.5f);
+
+                        Ray ray = get_camera_ray(&camera, u, -v);
+                        SDL_Color color = trace_ray(ray, spheres, NUM_SPHERES, MAX_DEPTH, use_bvh ? root : NULL);
+
+                        accumulated_colors[x][y].r = (float)color.r / 255.0f;
+                        accumulated_colors[x][y].g = (float)color.g / 255.0f;
+                        accumulated_colors[x][y].b = (float)color.b / 255.0f;
+                        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+                        SDL_RenderDrawPoint(renderer, x, y);
+                    }
+                }
+
+                accumulated_frames = 1;
+                camera.move = 0;
             }
             else
             {
+                accumulated_frames++;
 
-                if (camera.move)
+                for (int y = 0; y < HEIGHT; y++)
                 {
-
-                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                    SDL_RenderClear(renderer);
-
-                    float aspect_ratio = (float)WIDTH / (float)HEIGHT;
-
-                    for (int y = 0; y < HEIGHT; y++)
+                    for (int x = 0; x < WIDTH; x++)
                     {
-                        for (int x = 0; x < WIDTH; x++)
-                        {
-                            float u = ((float)x / WIDTH - 0.5f) * aspect_ratio;
-                            float v = (float)y / HEIGHT - 0.5f;
+                        // float u = ((float)x / WIDTH - 0.5f) * 2;
+                        // float v = ((float)y / HEIGHT - 0.5f) * 2;
 
-                            Ray ray = get_camera_ray(&camera, u, -v);
-                            SDL_Color color = trace_ray(ray, spheres, NUM_SPHERES, MAX_DEPTH, use_bvh ? root : NULL);
+                        float u = ((float)x / WIDTH - 0.5f);
+                        float v = ((float)y / HEIGHT - 0.5f);
 
-                            accumulated_colors[x][y].r = (float)color.r / 255.0f;
-                            accumulated_colors[x][y].g = (float)color.g / 255.0f;
-                            accumulated_colors[x][y].b = (float)color.b / 255.0f;
-                            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-                            SDL_RenderDrawPoint(renderer, x, y);
-                        }
-                    }
+                        Ray ray = get_camera_ray(&camera, u, -v);
+                        SDL_Color color = trace_ray(ray, spheres, NUM_SPHERES, MAX_DEPTH, use_bvh ? root : NULL);
 
-                    accumulated_frames = 1;
-                    camera.move = 0;
-                }
-                else
-                {
-                    accumulated_frames++;
-                    float aspect_ratio = (float)WIDTH / (float)HEIGHT;
+                        accumulated_colors[x][y].r += (float)color.r / 255.0f;
+                        accumulated_colors[x][y].g += (float)color.g / 255.0f;
+                        accumulated_colors[x][y].b += (float)color.b / 255.0f;
 
-                    for (int y = 0; y < HEIGHT; y++)
-                    {
-                        for (int x = 0; x < WIDTH; x++)
-                        {
-                            float u = ((float)x / WIDTH - 0.5f) * aspect_ratio;
-                            float v = (float)y / HEIGHT - 0.5f;
+                        SDL_Color avg_color = {
+                            (Uint8)(fmin(accumulated_colors[x][y].r / accumulated_frames * 255.0f, 255.0f)),
+                            (Uint8)(fmin(accumulated_colors[x][y].g / accumulated_frames * 255.0f, 255.0f)),
+                            (Uint8)(fmin(accumulated_colors[x][y].b / accumulated_frames * 255.0f, 255.0f)),
+                            255};
 
-                            Ray ray = get_camera_ray(&camera, u, -v);
-                            SDL_Color color = trace_ray(ray, spheres, NUM_SPHERES, MAX_DEPTH, use_bvh ? root : NULL);
-
-                            accumulated_colors[x][y].r += (float)color.r / 255.0f;
-                            accumulated_colors[x][y].g += (float)color.g / 255.0f;
-                            accumulated_colors[x][y].b += (float)color.b / 255.0f;
-
-                            SDL_Color avg_color = {
-                                (Uint8)(fmin(accumulated_colors[x][y].r / accumulated_frames * 255.0f, 255.0f)),
-                                (Uint8)(fmin(accumulated_colors[x][y].g / accumulated_frames * 255.0f, 255.0f)),
-                                (Uint8)(fmin(accumulated_colors[x][y].b / accumulated_frames * 255.0f, 255.0f)),
-                                255};
-
-                            SDL_SetRenderDrawColor(renderer, avg_color.r, avg_color.g, avg_color.b, avg_color.a);
-                            SDL_RenderDrawPoint(renderer, x, y);
-                        }
+                        SDL_SetRenderDrawColor(renderer, avg_color.r, avg_color.g, avg_color.b, avg_color.a);
+                        SDL_RenderDrawPoint(renderer, x, y);
                     }
                 }
-                SDL_RenderPresent(renderer);
+            }
+            SDL_RenderPresent(renderer);
 
-                frame_end = get_time();
-                double frame_time = frame_end - frame_start;
-                total_render_time += frame_time;
-                frame_count++;
+            }
 
-                if (frame_count % 10 == 0)
-                {
-                    printf("Average frame time: %f seconds (%.2f FPS)\n",
-                           total_render_time / frame_count,
-                           frame_count / total_render_time);
-                }
+            
+
+
+
+            
+
+            frame_end = get_time();
+            double frame_time = frame_end - frame_start;
+            total_render_time += frame_time;
+            frame_count++;
+
+            if (frame_count % 10 == 0)
+            {
+                printf("Average frame time: %f seconds (%.2f FPS)\n",
+                       total_render_time / frame_count,
+                       frame_count / total_render_time);
             }
         }
 
@@ -447,4 +434,57 @@ int SDL_main(int argc, char *argv[])
     }
 
     return 0;
+}
+
+
+double get_time()
+{
+    return (double)clock() / CLOCKS_PER_SEC;
+}
+
+
+
+
+// Plotting the graph img with sdl renderer, whose data was generated in case 1 (benchmark testing)
+// Generated data was orginally plotted with gnuplot and saved to png
+void display_plot_with_sdl(SDL_Renderer *renderer)
+{
+
+    int imgFlags = IMG_INIT_PNG;
+    if (!(IMG_Init(imgFlags) & imgFlags))
+    {
+        printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+        return;
+    }
+
+    SDL_Surface *plot_surface = IMG_Load("benchmark_results.png");
+    if (!plot_surface)
+    {
+        printf("Error loading plot: %s\n", IMG_GetError());
+        return;
+    }
+
+    SDL_Texture *plot_texture = SDL_CreateTextureFromSurface(renderer, plot_surface);
+    SDL_FreeSurface(plot_surface);
+
+    if (!plot_texture)
+    {
+        printf("Error creating texture: %s\n", SDL_GetError());
+        return;
+    }
+
+    int width, height;
+    SDL_QueryTexture(plot_texture, NULL, NULL, &width, &height);
+    SDL_Rect dest_rect = {
+        .x = (WIDTH - width) / 2,
+        .y = (HEIGHT - height) / 2,
+        .w = width,
+        .h = height};
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, plot_texture, NULL, &dest_rect);
+    SDL_RenderPresent(renderer);
+    SDL_DestroyTexture(plot_texture);
+    IMG_Quit();
 }
