@@ -28,8 +28,8 @@ else
     RM := rm -f
 endif
 
-# Compile with debug information
-CFLAGS += -g
+# Compile with debug information and optimizations
+CFLAGS += -g -O2
 
 # OpenMP support
 # CFLAGS += -fopenmp

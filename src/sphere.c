@@ -54,8 +54,8 @@ Sphere create_sphere(Vec3 center, float radius){
 Sphere create_random_sphere() {
     
     Sphere sphere = {
-        .center = {random_float(-40.0f, 40.0f), random_float(3.0f, 15.0f), random_float(-10.0, 5)},
-        .radius = random_float(0.5f, 5.0f),
+        .center = {random_float(-50.0f, 50.0f), random_float(-50.0f, 50.0f), random_float(-100.0f, 0.0f)},
+        .radius = random_float(0.5f, 3.0f),
         .color = {rand() % 256, rand() % 256, rand() % 256, 255},
     };
     return sphere;

@@ -1,0 +1,82 @@
+Realtime Rendering Benchmark Log
+================================
+Date: 2026-08-30
+Command: ./raytracer 2 200 150 1000
+Resolution: 200x150 (30,000 rays/frame)
+Spheres: 1000
+Max Depth: 5
+BVH Depth Limit: 40
+
+=== WITH BVH ===
+
+Trace: 0.0409s | Draw: 0.0016s | Total: 0.0425s
+Realtime FPS: 18.76 | Average FPS: 19.01
+
+Trace: 0.0398s | Draw: 0.0016s | Total: 0.0414s
+Realtime FPS: 19.42 | Average FPS: 19.02
+
+Trace: 0.0434s | Draw: 0.0015s | Total: 0.0449s
+Realtime FPS: 18.77 | Average FPS: 19.01
+
+Trace: 0.0454s | Draw: 0.0016s | Total: 0.0470s
+Realtime FPS: 20.00 | Average FPS: 19.04
+
+Trace: 0.0418s | Draw: 0.0016s | Total: 0.0434s
+Realtime FPS: 20.37 | Average FPS: 19.08
+
+Trace: 0.0377s | Draw: 0.0016s | Total: 0.0393s
+Realtime FPS: 20.59 | Average FPS: 19.11
+
+Trace: 0.0419s | Draw: 0.0016s | Total: 0.0434s
+Realtime FPS: 19.98 | Average FPS: 19.13
+
+Trace: 0.0674s | Draw: 0.0017s | Total: 0.0691s
+Realtime FPS: 14.03 | Average FPS: 18.93
+
+Trace: 0.0668s | Draw: 0.0018s | Total: 0.0686s
+Realtime FPS: 13.09 | Average FPS: 18.18
+
+Trace: 0.0678s | Draw: 0.0017s | Total: 0.0695s
+Realtime FPS: 13.18 | Average FPS: 18.05
+
+Trace: 0.0674s | Draw: 0.0016s | Total: 0.0690s
+Realtime FPS: 13.05 | Average FPS: 17.92
+
+Trace: 0.0678s | Draw: 0.0017s | Total: 0.0695s
+Realtime FPS: 13.08 | Average FPS: 17.80
+
+Average with BVH:
+  Trace: ~0.053s
+  Draw:  ~0.002s
+  FPS:   ~15
+
+=== WITHOUT BVH ===
+
+Trace: 0.5446s | Draw: 0.0026s | Total: 0.5471s
+Realtime FPS: 4.59 | Average FPS: 16.40
+
+Trace: 0.5471s | Draw: 0.0024s | Total: 0.5495s
+Realtime FPS: 1.79 | Average FPS: 14.54
+
+Trace: 0.5350s | Draw: 0.0022s | Total: 0.5372s
+Realtime FPS: 1.83 | Average FPS: 13.13
+
+Trace: 0.4945s | Draw: 0.0021s | Total: 0.4966s
+Realtime FPS: 1.86 | Average FPS: 12.03
+
+Trace: 0.4890s | Draw: 0.0022s | Total: 0.4912s
+Realtime FPS: 1.95 | Average FPS: 11.17
+
+Trace: 0.4567s | Draw: 0.0021s | Total: 0.4588s
+Realtime FPS: 2.03 | Average FPS: 10.47
+
+Average without BVH:
+  Trace: ~0.51s
+  Draw:  ~0.002s
+  FPS:   ~2
+
+=== RESULT ===
+
+Realtime BVH speedup at 1000 spheres: ~8x (1.8 FPS -> 15 FPS)
+Trace time reduction: 0.51s -> 0.053s per frame
+Draw calls are negligible (~0.002s per frame, all CPU)

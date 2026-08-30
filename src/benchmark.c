@@ -6,6 +6,9 @@
 #include <stdbool.h>
 #include "Custom/benchmark.h"
 #include "Custom/hit.h"
+#include "Custom/renderer.h"
+#include "Custom/ray.h"
+#include "Custom/camera.h"
 
 #ifdef _WIN32
 #define PRIu64 "I64u"
@@ -157,23 +160,78 @@ void print_sphere_info(Sphere *spheres, int num_spheres) {
 }
 
 
+double benchmark_rendering(Sphere *spheres, int num_spheres, BVHNode *root,
+                           int img_width, int img_height, int num_samples)
+{
+    Camera camera = {
+        .position = {0, 0, 100},
+        .forward = {0, 0, -1},
+        .right = {1, 0, 0},
+        .up = {0, 1, 0},
+        .fov = 45.0f};
+
+    // Benchmark WITHOUT BVH
+    clock_t start = clock();
+    for (int s = 0; s < num_samples; s++)
+    {
+        for (int y = 0; y < img_height; y++)
+        {
+            for (int x = 0; x < img_width; x++)
+            {
+                float u = ((float)x / img_width - 0.5f);
+                float v = ((float)y / img_height - 0.5f);
+                Ray ray = get_camera_ray(&camera, u, -v);
+                trace_ray(ray, spheres, num_spheres, 5, NULL);
+            }
+        }
+    }
+    clock_t end = clock();
+    double time_no_bvh = (double)(end - start) / CLOCKS_PER_SEC;
+
+    // Benchmark WITH BVH
+    start = clock();
+    for (int s = 0; s < num_samples; s++)
+    {
+        for (int y = 0; y < img_height; y++)
+        {
+            for (int x = 0; x < img_width; x++)
+            {
+                float u = ((float)x / img_width - 0.5f);
+                float v = ((float)y / img_height - 0.5f);
+                Ray ray = get_camera_ray(&camera, u, -v);
+                trace_ray(ray, spheres, num_spheres, 5, root);
+            }
+        }
+    }
+    end = clock();
+    double time_with_bvh = (double)(end - start) / CLOCKS_PER_SEC;
+
+    int total_rays = img_width * img_height * num_samples;
+    printf("Rendering (%dx%d, %d samples, %d rays total):\n",
+           img_width, img_height, num_samples, total_rays);
+    printf("  No BVH:  %.4f seconds\n", time_no_bvh);
+    printf("  With BVH: %.4f seconds\n", time_with_bvh);
+    printf("  Speedup: %.1fx\n\n", time_no_bvh / time_with_bvh);
+
+    return time_no_bvh / time_with_bvh;
+}
+
+
 void run_benchmark()
 {
 
     remove("benchmark_data.txt");
     srand(time(NULL));
 
-    int sphere_counts[10];
-    int s = 5000;
-    for (int i = 0; i < 10; i++)
-    {
-        sphere_counts[i] = s;
-        s += 5000;
-    }
+    int sphere_counts[] = {
+        1000, 5000, 10000, 50000, 100000,
+        500000, 1000000
+    };
+    int num_counts = sizeof(sphere_counts) / sizeof(sphere_counts[0]);
     int num_rays = 10000;
     float world_size = 1000.0f;
 
-    for (int i = 0; i < sizeof(sphere_counts) / sizeof(sphere_counts[0]); i++)
+    for (int i = 0; i < num_counts; i++)
     {
         int num_spheres = sphere_counts[i];
         printf("Testing with %d spheres:\n", num_spheres);
@@ -194,6 +252,8 @@ void run_benchmark()
         double time_no_bvh = benchmark_no_bvh(spheres, num_spheres, num_rays);
         double time_with_bvh = benchmark_with_bvh(root, num_spheres, num_rays);
 
+        printf("Speedup: %.1fx\n", time_no_bvh / time_with_bvh);
+
         save_benchmark_data("benchmark_data.txt", num_spheres, time_no_bvh, time_with_bvh);
         free_bvh(root);
         free(spheres);
@@ -202,5 +262,54 @@ void run_benchmark()
     }
 
     printf("\nBenchmark data saved to 'benchmark_data.txt'\n");
-    printf("To generate a plot, run: python3 results/main.py\n");
+
+    // === Rendering Benchmark ===
+    printf("\n========================================\n");
+    printf("  RENDERING BENCHMARK\n");
+    printf("  (simulates full pixel loop with reflections)\n");
+    printf("========================================\n\n");
+
+    int render_sphere_counts[] = {50, 100, 500, 1000, 5000};
+    int num_render_counts = sizeof(render_sphere_counts) / sizeof(render_sphere_counts[0]);
+    int img_width = 200;
+    int img_height = 150;
+    int num_samples = 3;
+
+    FILE *render_file = fopen("benchmark_render_data.txt", "w");
+    if (render_file) fclose(render_file);
+
+    for (int i = 0; i < num_render_counts; i++)
+    {
+        int num_spheres = render_sphere_counts[i];
+        printf("--- %d spheres ---\n", num_spheres);
+
+        Sphere *spheres = malloc(num_spheres * sizeof(Sphere));
+        for (int j = 0; j < num_spheres; j++)
+        {
+            Vec3 center = {
+                (float)rand() / RAND_MAX * 200 - 100,
+                (float)rand() / RAND_MAX * 200 - 100,
+                (float)rand() / RAND_MAX * 200 - 100};
+            spheres[j] = create_benchmark_sphere(center);
+        }
+
+        BVHNode *root = build_bvh_node(spheres, 0, num_spheres - 1, 20);
+
+        double speedup = benchmark_rendering(spheres, num_spheres, root,
+                                             img_width, img_height, num_samples);
+
+        // Append to render data file
+        FILE *f = fopen("benchmark_render_data.txt", "a");
+        if (f)
+        {
+            fprintf(f, "%d %.6f\n", num_spheres, speedup);
+            fclose(f);
+        }
+
+        free_bvh(root);
+        free(spheres);
+    }
+
+    printf("Render benchmark data saved to 'benchmark_render_data.txt'\n");
+    printf("To generate plots, run: python3 results/main.py\n");
 }

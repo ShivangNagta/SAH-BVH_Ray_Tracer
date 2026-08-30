@@ -48,13 +48,21 @@ int SDL_main(int argc, char *argv[])
 
     // printf("%f", t);
 
-    printf("\nPlease proceed as follows :\n\n");
-    printf("Press '1' for benchmark testing with graph plot.\n");
-    printf("Press '2' for Realtime CPU Raytracing.\n");
-    printf("Waiting for the input : ");
-
-    int input;
-    scanf("%d", &input);
+    int input = 0;
+    if (argc >= 2)
+    {
+        input = atoi(argv[1]);
+    }
+    else
+    {
+        printf("\nPlease proceed as follows :\n\n");
+        printf("Press '1' for benchmark testing with graph plot.\n");
+        printf("Press '2' for Realtime CPU Raytracing.\n");
+        printf("  Usage: ./raytracer 2 [width] [height] [num_spheres]\n");
+        printf("  Example: ./raytracer 2 200 150 1000\n");
+        printf("Waiting for the input : ");
+        scanf("%d", &input);
+    }
 
     switch (input)
     {
@@ -93,6 +101,17 @@ int SDL_main(int argc, char *argv[])
 
     case 2:
     {
+        int win_width = WIDTH;
+        int win_height = HEIGHT;
+        int num_spheres = NUM_SPHERES;
+
+        if (argc >= 3) win_width = atoi(argv[2]);
+        if (argc >= 4) win_height = atoi(argv[3]);
+        if (argc >= 5) num_spheres = atoi(argv[4]);
+        if (num_spheres < 2) num_spheres = 2;
+
+        printf("Resolution: %dx%d | Spheres: %d\n", win_width, win_height, num_spheres);
+
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
         {
             printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -101,7 +120,7 @@ int SDL_main(int argc, char *argv[])
 
         SDL_Window *window = SDL_CreateWindow("Raytracer",
                                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                              WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
+                                              win_width, win_height, SDL_WINDOW_SHOWN);
         if (!window)
         {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -139,19 +158,19 @@ int SDL_main(int argc, char *argv[])
             .move = 0};
 
 
-        Sphere spheres[NUM_SPHERES];
+        Sphere *spheres = malloc(num_spheres * sizeof(Sphere));
 
         spheres[0] = create_sphere(((Vec3){0.0f, -1000.0f, 30.0f}), 1000.0f);
         spheres[1] = create_sphere(((Vec3){0.0f, 48.0f, -50.0f}), 50.0f);
 
-        for (int i = 2; i < NUM_SPHERES; i++)
+        for (int i = 2; i < num_spheres; i++)
         {
             spheres[i] = create_random_sphere();
         }
 
         printf("Building BVH...\n");
         double bvh_start = get_time();
-        BVHNode *root = build_bvh_node(spheres, 0, NUM_SPHERES, 0);
+        BVHNode *root = build_bvh_node(spheres, 0, num_spheres, 0);
         double bvh_end = get_time();
         double bvh_build_time = bvh_end - bvh_start;
         printf("BVH built in %f seconds\n", bvh_build_time);
@@ -172,7 +191,7 @@ int SDL_main(int argc, char *argv[])
         int show_bvh_visualization = 0;
 
         int accumulated_frames = 1;
-        FloatColor **accumulated_colors = (FloatColor **)malloc(WIDTH * sizeof(FloatColor *));
+        FloatColor **accumulated_colors = (FloatColor **)malloc(win_width * sizeof(FloatColor *));
         if (!accumulated_colors)
         {
             printf("Failed to allocate memory for accumulated_colors\n");
@@ -181,9 +200,9 @@ int SDL_main(int argc, char *argv[])
             SDL_Quit();
             return 1;
         }
-        for (int i = 0; i < WIDTH; i++)
+        for (int i = 0; i < win_width; i++)
         {
-            accumulated_colors[i] = (FloatColor *)malloc(HEIGHT * sizeof(FloatColor));
+            accumulated_colors[i] = (FloatColor *)malloc(win_height * sizeof(FloatColor));
             if (!accumulated_colors[i])
             {
                 printf("Failed to allocate memory for accumulated_colors[%d]\n", i);
@@ -198,7 +217,7 @@ int SDL_main(int argc, char *argv[])
                 SDL_Quit();
                 return 1;
             }
-            for (int j = 0; j < HEIGHT; j++)
+            for (int j = 0; j < win_height; j++)
             {
                 accumulated_colors[i][j].r = 0.0f;
                 accumulated_colors[i][j].g = 0.0f;
@@ -285,33 +304,40 @@ int SDL_main(int argc, char *argv[])
                             if (camera.move)
             {
 
-                printf("%f %f %f\n", camera.position.x, camera.position.y, camera.position.z);
-                printf("%f %f %f\n", camera.forward.x, camera.forward.y, camera.forward.z);
-                printf("%f %f %f\n", camera.right.x, camera.right.y, camera.right.z);
-                printf("%f %f %f\n", camera.up.x, camera.up.y, camera.  up.z);
+                // printf("%f %f %f\n", camera.position.x, camera.position.y, camera.position.z);
+                // printf("%f %f %f\n", camera.forward.x, camera.forward.y, camera.forward.z);
+                // printf("%f %f %f\n", camera.right.x, camera.right.y, camera.right.z);
+                // printf("%f %f %f\n", camera.up.x, camera.up.y, camera.  up.z);
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                 SDL_RenderClear(renderer);
 
-                for (int y = 0; y < HEIGHT; y++)
+                double trace_time = 0, draw_time = 0;
+
+                for (int y = 0; y < win_height; y++)
                 {
-                    for (int x = 0; x < WIDTH; x++)
+                    for (int x = 0; x < win_width; x++)
                     {
-                        // float u = ((float)x / WIDTH - 0.5f) * 2;
-                        // float v = ((float)y / HEIGHT - 0.5f) * 2;
+                        float u = ((float)x / win_width - 0.5f);
+                        float v = ((float)y / win_height - 0.5f);
 
-                        float u = ((float)x / WIDTH - 0.5f);
-                        float v = ((float)y / HEIGHT - 0.5f);
-
+                        double t0 = get_time();
                         Ray ray = get_camera_ray(&camera, u, -v);
-                        SDL_Color color = trace_ray(ray, spheres, NUM_SPHERES, MAX_DEPTH, use_bvh ? root : NULL);
+                        SDL_Color color = trace_ray(ray, spheres, num_spheres, MAX_DEPTH, use_bvh ? root : NULL);
+                        double t1 = get_time();
+                        trace_time += t1 - t0;
 
                         accumulated_colors[x][y].r = (float)color.r / 255.0f;
                         accumulated_colors[x][y].g = (float)color.g / 255.0f;
                         accumulated_colors[x][y].b = (float)color.b / 255.0f;
                         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
                         SDL_RenderDrawPoint(renderer, x, y);
+                        double t2 = get_time();
+                        draw_time += t2 - t1;
                     }
                 }
+
+                printf("  Trace: %.4fs | Draw: %.4fs | Total: %.4fs\n",
+                       trace_time, draw_time, trace_time + draw_time);
 
                 accumulated_frames = 1;
                 camera.move = 0;
@@ -320,18 +346,20 @@ int SDL_main(int argc, char *argv[])
             {
                 accumulated_frames++;
 
-                for (int y = 0; y < HEIGHT; y++)
+                double trace_time = 0, draw_time = 0;
+
+                for (int y = 0; y < win_height; y++)
                 {
-                    for (int x = 0; x < WIDTH; x++)
+                    for (int x = 0; x < win_width; x++)
                     {
-                        // float u = ((float)x / WIDTH - 0.5f) * 2;
-                        // float v = ((float)y / HEIGHT - 0.5f) * 2;
+                        float u = ((float)x / win_width - 0.5f);
+                        float v = ((float)y / win_height - 0.5f);
 
-                        float u = ((float)x / WIDTH - 0.5f);
-                        float v = ((float)y / HEIGHT - 0.5f);
-
+                        double t0 = get_time();
                         Ray ray = get_camera_ray(&camera, u, -v);
-                        SDL_Color color = trace_ray(ray, spheres, NUM_SPHERES, MAX_DEPTH, use_bvh ? root : NULL);
+                        SDL_Color color = trace_ray(ray, spheres, num_spheres, MAX_DEPTH, use_bvh ? root : NULL);
+                        double t1 = get_time();
+                        trace_time += t1 - t0;
 
                         accumulated_colors[x][y].r += (float)color.r / 255.0f;
                         accumulated_colors[x][y].g += (float)color.g / 255.0f;
@@ -345,8 +373,14 @@ int SDL_main(int argc, char *argv[])
 
                         SDL_SetRenderDrawColor(renderer, avg_color.r, avg_color.g, avg_color.b, avg_color.a);
                         SDL_RenderDrawPoint(renderer, x, y);
+                        double t2 = get_time();
+                        draw_time += t2 - t1;
                     }
                 }
+
+                if (accumulated_frames % 10 == 0)
+                    printf("  [frame %d] Trace: %.4fs | Draw: %.4fs\n",
+                           accumulated_frames, trace_time, draw_time);
             }
             SDL_RenderPresent(renderer);
 
@@ -385,11 +419,12 @@ int SDL_main(int argc, char *argv[])
         printf("Average FPS: %.2f\n", frame_count / total_render_time);
         printf("BVH build time: %f seconds\n", bvh_build_time);
 
-        for (int i = 0; i < WIDTH; i++)
+        for (int i = 0; i < win_width; i++)
         {
             free(accumulated_colors[i]);
         }
         free(accumulated_colors);
+        free(spheres);
 
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
