@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include <SDL2/SDL_image.h>
 #include "Custom/constants.h"
 #include "Custom/camera.h"
 #include "Custom/sphere.h"
@@ -28,7 +27,6 @@ typedef struct
 
 
 double get_time();
-void display_plot_with_sdl(SDL_Renderer *renderer);
 
 
 //----------------------------------------------------------------------------------------------------
@@ -64,7 +62,7 @@ int SDL_main(int argc, char *argv[])
         //----------------------------------------------------------------------------------------------------
 
         // Benchmark Testing
-        // Runs testing defined in benchmark.c through function call - run_benchmark_with_plotting();
+        // Runs testing defined in benchmark.c through function call - run_benchmark();
         // Testing is done for the intersection of rays with the randomly generated spheres.
         // It involves comparison in tests between bvh and no bvh implementation.
         // The bvh implementation might show constant time run, as the test cases are not enough.
@@ -75,49 +73,8 @@ int SDL_main(int argc, char *argv[])
 
     case 1:
     {
-        if (SDL_Init(SDL_INIT_VIDEO) < 0)
-        {
-            printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-            return 1;
-        }
-
-        SDL_Window *window = SDL_CreateWindow("Testing",
-                                              SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                              WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
-        if (!window)
-        {
-            printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-            return 1;
-        }
-
-        SDL_Renderer *renderer = SDL_CreateRenderer(window, -1,
-                                                    SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-        if (!renderer)
-        {
-            printf("Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return 1;
-        }
-
-        run_benchmark_with_plotting();
-        if (renderer)
-        {
-            display_plot_with_sdl(renderer);
-            SDL_Event e;
-            while (SDL_WaitEvent(&e))
-            {
-                if (e.type == SDL_QUIT ||
-                    (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE))
-                {
-                    break;
-                }
-            }
-        }
-
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        run_benchmark();
+        printf("\nTo generate a benchmark plot, run: python3 results/main.py\n");
         break;
     }
         //----------------------------------------------------------------------------------------------------
@@ -443,48 +400,3 @@ double get_time()
 }
 
 
-
-
-// Plotting the graph img with sdl renderer, whose data was generated in case 1 (benchmark testing)
-// Generated data was orginally plotted with gnuplot and saved to png
-void display_plot_with_sdl(SDL_Renderer *renderer)
-{
-
-    int imgFlags = IMG_INIT_PNG;
-    if (!(IMG_Init(imgFlags) & imgFlags))
-    {
-        printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
-        return;
-    }
-
-    SDL_Surface *plot_surface = IMG_Load("benchmark_results.png");
-    if (!plot_surface)
-    {
-        printf("Error loading plot: %s\n", IMG_GetError());
-        return;
-    }
-
-    SDL_Texture *plot_texture = SDL_CreateTextureFromSurface(renderer, plot_surface);
-    SDL_FreeSurface(plot_surface);
-
-    if (!plot_texture)
-    {
-        printf("Error creating texture: %s\n", SDL_GetError());
-        return;
-    }
-
-    int width, height;
-    SDL_QueryTexture(plot_texture, NULL, NULL, &width, &height);
-    SDL_Rect dest_rect = {
-        .x = (WIDTH - width) / 2,
-        .y = (HEIGHT - height) / 2,
-        .w = width,
-        .h = height};
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, plot_texture, NULL, &dest_rect);
-    SDL_RenderPresent(renderer);
-    SDL_DestroyTexture(plot_texture);
-    IMG_Quit();
-}
