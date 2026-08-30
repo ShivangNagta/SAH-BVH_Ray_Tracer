@@ -163,6 +163,11 @@ int SDL_main(int argc, char *argv[])
         double frame_start, frame_end;
         double total_render_time = 0;
 
+        #define FPS_WINDOW 10
+        double frame_times[FPS_WINDOW];
+        int frame_time_idx = 0;
+        int frame_time_count = 0;
+
         int use_bvh = 1;
         int show_bvh_visualization = 0;
 
@@ -358,10 +363,18 @@ int SDL_main(int argc, char *argv[])
             total_render_time += frame_time;
             frame_count++;
 
+            frame_times[frame_time_idx] = frame_time;
+            frame_time_idx = (frame_time_idx + 1) % FPS_WINDOW;
+            if (frame_time_count < FPS_WINDOW) frame_time_count++;
+
+            double window_sum = 0;
+            for (int i = 0; i < frame_time_count; i++) window_sum += frame_times[i];
+            double realtime_fps = frame_time_count / window_sum;
+
             if (frame_count % 10 == 0)
             {
-                printf("Average frame time: %f seconds (%.2f FPS)\n",
-                       total_render_time / frame_count,
+                printf("Realtime FPS: %.2f | Average FPS: %.2f\n",
+                       realtime_fps,
                        frame_count / total_render_time);
             }
         }
