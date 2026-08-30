@@ -396,7 +396,9 @@ int SDL_main(int argc, char *argv[])
 
 double get_time()
 {
-    return (double)clock() / CLOCKS_PER_SEC;
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
 }
 
 
