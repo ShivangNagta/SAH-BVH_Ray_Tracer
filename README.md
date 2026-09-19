@@ -39,16 +39,6 @@ make
 ```bash
 # Interactive menu
 ./raytracer
-
-# Run benchmarks directly
-./raytracer 1
-
-# Realtime rendering with custom resolution and sphere count
-./raytracer 2 [width] [height] [num_spheres]
-
-# Examples
-./raytracer 2 200 150 1000    # Low res, 1000 spheres — see BVH speedup
-./raytracer 2 1000 800 10     # Full res, 10 spheres — default scene
 ```
 
 ### Controls (Realtime Mode)

@@ -58,8 +58,6 @@ int SDL_main(int argc, char *argv[])
         printf("\nPlease proceed as follows :\n\n");
         printf("Press '1' for benchmark testing with graph plot.\n");
         printf("Press '2' for Realtime CPU Raytracing.\n");
-        printf("  Usage: ./raytracer 2 [width] [height] [num_spheres]\n");
-        printf("  Example: ./raytracer 2 200 150 1000\n");
         printf("Waiting for the input : ");
         scanf("%d", &input);
     }
@@ -105,9 +103,18 @@ int SDL_main(int argc, char *argv[])
         int win_height = HEIGHT;
         int num_spheres = NUM_SPHERES;
 
-        if (argc >= 3) win_width = atoi(argv[2]);
-        if (argc >= 4) win_height = atoi(argv[3]);
-        if (argc >= 5) num_spheres = atoi(argv[4]);
+        printf("Press ENTER to keep default arguments\n");
+        printf("Usage: [width] [height] [num_spheres]\n");
+        printf("e.g. :200 150 1000\n");
+
+        char input[100];
+        scanf(" %[^\n]", input);
+
+        if (SDL_strcmp(input, "default") != 0) {
+        //   printf("Inside custom input section...");
+          sscanf(input, "%d %d %d", &win_width, &win_height, &num_spheres);
+        }
+
         if (num_spheres < 2) num_spheres = 2;
 
         printf("Resolution: %dx%d | Spheres: %d\n", win_width, win_height, num_spheres);
