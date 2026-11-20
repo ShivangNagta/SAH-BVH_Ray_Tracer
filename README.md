@@ -88,10 +88,6 @@ See `results/BENCHMARK_REPORT.md` for full analysis.
 </p>
 
 <p align="center">
-  <img width="987" alt="Complexity Analysis" src="https://github.com/user-attachments/assets/76585d93-f58d-4939-9c68-02093f8adb07">
-</p>
-
-<p align="center">
   <img width="987" alt="BVH Intersection Test" src="https://github.com/user-attachments/assets/9351f1c2-5951-4e6f-b4a1-96ed9a8cdf4a">
 </p>
 
